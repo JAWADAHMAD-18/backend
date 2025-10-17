@@ -34,7 +34,7 @@ const userSchema = new Schema(
       type: String, //image path
       required: true,
     },
-    avatar: {
+    coverImage: {
       type: String, //image path
     },
     watchHistory: [
