@@ -6,7 +6,6 @@ import { ApiResponse } from "../utils/apiResponse.js";
 
 const userRegister = asyncHandler(async (req, res) => {
   const { fullname, username, email, password } = req.body;
-  console.log(req.body);
   if (
     [fullname, username, email, password].some((field) => field?.trim() === "")
   ) {
@@ -15,12 +14,12 @@ const userRegister = asyncHandler(async (req, res) => {
   const existedUser = await User.findOne({ $or: [{ username }, { email }] });
   if (existedUser) throw new ApiError(409, "User already exists");
   const avatarLocalPath = req.files?.avatar[0]?.path;
-  const coverImageLocalPath = req.files?.coverImage[0]?.path;
-  if (!avatarLocalPath) throw new ApiError(400, "Avatar is required");
+  const coverImageLocalPath = req.files?.coverImage?.[0]?.path || null;
+  if (!avatarLocalPath) throw new ApiError(400, "Avatar is required on local");
   const avatar = await cordinaryUploadImage(avatarLocalPath);
   const coverImage = await cordinaryUploadImage(coverImageLocalPath);
   if (!avatar) {
-    throw new ApiError(400, "Avatar is required");
+    throw new ApiError(400, "Avatar is required on cloudinary");
   }
   const user = await User.create({
     fullname,
