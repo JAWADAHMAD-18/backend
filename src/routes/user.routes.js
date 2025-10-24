@@ -1,6 +1,7 @@
 import { Router } from "express";
-import { userRegister } from "../controllers/user.controller.js";
+import { loginUser, logout, userRegister } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/cloudniary.middlewares.js";
+import verifyAuth from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
@@ -11,5 +12,8 @@ router.route("/register").post(
   ]),
   userRegister
 );
+router.route("/login").post(loginUser);
+//secured routes
+router.route("/logout").post(verifyAuth,logout);
 
 export default router;
