@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { loginUser, logout, userRegister } from "../controllers/user.controller.js";
+import { loginUser, logout, userRegister,newRefreshToken } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/cloudniary.middlewares.js";
 import verifyAuth from "../middlewares/auth.middleware.js";
 
@@ -15,5 +15,6 @@ router.route("/register").post(
 router.route("/login").post(loginUser);
 //secured routes
 router.route("/logout").post(verifyAuth,logout);
+router.route("/newRefreshToken").post(newRefreshToken);
 
 export default router;

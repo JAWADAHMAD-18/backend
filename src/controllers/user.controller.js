@@ -110,20 +110,26 @@ const logout = asyncHandler(async (req, res) => {
 const newRefreshToken = asyncHandler(async (req, res) => {
   const incomingRefreshToken=req.cookies.refreshToken || req.body.refreshToken;
   if(!incomingRefreshToken) throw new ApiError(401,"Unauthorized user");
-  const decode=jwt.verify(incomingRefreshToken,process.env.REFRESH_TOKEN_SECRET);
-  const user=await User.findById(decode?.id);
-  if(!user) throw new ApiError(401,"Unauthorized user");
-  const {accessToken,refreshToken}=await generateAccessandrefreshToken(user._id);
-  const options = {
-    httpOnly: true,
-    secure: true,
-  };
-  return res
-  .status(200)
-  .cookie("refreshToken", refreshToken, options)
-  .cookie("accessToken", accessToken, options)
-  .json(new ApiResponse(200,{accessToken,refreshToken},"User logged in successfully"));
-
+  try {
+    const decode=jwt.verify(incomingRefreshToken,process.env.REFRESH_TOKEN_SECRET);
+    const user=await User.findById(decode?._id);
+    if(!user) throw new ApiError(401,"Unauthorized user");
+    if(incomingRefreshToken!==user.refreshToken) throw new ApiError(401,"the refresh token is already used or expired");
+    const {accessToken,refreshToken}=await generateAccessandrefreshToken(user._id);
+    const options = {
+      httpOnly: true,
+      secure: true,
+    };
+    return res
+    .status(200)
+    .cookie("refreshToken", refreshToken, options)
+    .cookie("accessToken", accessToken, options)
+    .json(new ApiResponse(200,{accessToken,refreshToken},"Access token successfully renewed"));
+  
+  } catch (error) {
+    throw new ApiError(401, "there is issue during renewing access token");
+    
+  }
 })
 
-export { userRegister, loginUser, logout };
+export { userRegister, loginUser, logout,newRefreshToken };
