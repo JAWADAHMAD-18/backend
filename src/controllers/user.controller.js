@@ -284,7 +284,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     }
   ]);
   if(!channel?.length) throw new ApiError(404, "Channel data  not found error during aggregate ");
-  res.status(200).json(new ApiResponse(200, channel[0], "Channel data found and send  successfully"));
+  return res.status(200).json(new ApiResponse(200, channel[0], "Channel data found and send  successfully"));
 });
 export {
   userRegister,
