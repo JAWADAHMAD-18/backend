@@ -4,6 +4,7 @@ import { User } from "../models/user.models.js";
 import cordinaryUploadImage from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 
 const generateAccessandrefreshToken = async (userid) => {
   try {
@@ -263,28 +264,81 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
       $addFields: {
         subscriberCount: { $size: "$subscriber" },
         subscribedtoCount: { $size: "$subscribedto" },
-        isSubscribed:{
-          $cond:{
-            if:{$in:[req.user?._id,"$subscribers.subscriber"]},
-            then:true,
-            else:false
-          }
-        }
+        isSubscribed: {
+          $cond: {
+            if: { $in: [req.user?._id, "$subscribers.subscriber"] },
+            then: true,
+            else: false,
+          },
+        },
       },
-    },{
-      $project:{
-        fullname:1,
-        username:1,
-        avatar:1,
-        coverImage:1,
-        subscriberCount:1,
-        subscribedtoCount:1,
-        isSubscribed:1
-      }
-    }
+    },
+    {
+      $project: {
+        fullname: 1,
+        username: 1,
+        avatar: 1,
+        coverImage: 1,
+        subscriberCount: 1,
+        subscribedtoCount: 1,
+        isSubscribed: 1,
+      },
+    },
   ]);
-  if(!channel?.length) throw new ApiError(404, "Channel data  not found error during aggregate ");
-  return res.status(200).json(new ApiResponse(200, channel[0], "Channel data found and send  successfully"));
+  if (!channel?.length)
+    throw new ApiError(404, "Channel data  not found error during aggregate ");
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        channel[0],
+        "Channel data found and send  successfully"
+      )
+    );
+});
+const getWatchHistory = asyncHandler(async (req, res) => {
+  const user = await User.aggregate([
+    {
+      $match: {
+        _id: new mongoose.Types.ObjectId(req.user._id),
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "watchHistory",
+        foreignField: "_id",
+        as: "watchHistory",
+        pipeline: [
+          {
+            $lookup: {
+              from: "users",
+              localField: "owner",
+              foreignField: "_id",
+              as: "owner",
+              pipeline: [
+                {
+                  $project: {
+                    fullname: 1,
+                    username: 1,
+                    avatar: 1,
+                  },
+                },
+              ],
+            },
+          },{
+            $addFields:{//this portion is just for frontend developer to get easier he will get a object now with onkly that vallues warna usay aray jana tha 
+              owner:{
+                $first:"$owner",//yahan par first sy matlab aarray ka first element hy 
+              }
+            }
+          }
+        ],
+      },
+    },
+  ]);
+  res.ststus(200).json(new ApiResponse(200, user[0].watchHistory, "Watch history found"));
 });
 export {
   userRegister,
@@ -297,4 +351,5 @@ export {
   updateUserAvatar,
   updateUserCoverPhoto,
   getUserChannelProfile,
+  getWatchHistory,
 };
